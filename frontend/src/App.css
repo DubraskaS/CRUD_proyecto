@@ -1,0 +1,151 @@
+/* --- Globales y Reset --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #2c3e50; /* Fondo oscuro (Admin Panel) */
+    color: #ecf0f1; /* Texto claro */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* --- Contenedor Principal y Centrado --- */
+.main-container {
+    max-width: 1200px; /* Ancho máximo para el contenido */
+    margin: 40px auto; /* Centra el contenedor horizontalmente */
+    padding: 20px;
+    background-color: #34495e; /* Fondo principal (área gris oscuro) */
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Estructura de Columnas --- */
+.content-columns {
+    display: flex;
+    gap: 30px; /* Espacio entre las columnas */
+    padding: 20px;
+}
+
+/* --- Paneles Izquierdo y Derecho (Columnas) --- */
+.left-panel {
+    flex: 1; /* Ocupa la mitad del espacio */
+    padding: 20px;
+    background-color: #2c3e50;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.right-panel {
+    flex: 1.5; /* Ocupa más espacio, ideal para la tabla */
+    padding: 20px;
+    background-color: #2c3e50;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Títulos --- */
+h1, h2, h3 {
+    color: #00bcd4; /* Color de acento para los títulos */
+    border-bottom: 2px solid #3f556d;
+    padding-bottom: 8px;
+    margin-top: 10px;
+}
+
+.total-users {
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #ecf0f1;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #3f556d;
+    margin: 20px 0;
+}
+
+/* --- Estilos de Formulario e Inputs --- */
+input {
+    width: calc(100% - 24px); 
+    padding: 10px 12px;
+    margin: 8px 0;
+    display: block;
+    border: 1px solid #4a6681;
+    border-radius: 6px;
+    box-sizing: border-box;
+    background-color: #3f556d;
+    color: #ecf0f1;
+}
+
+input::placeholder {
+    color: #b0c0d1;
+}
+
+/* --- Estilos de Botones --- */
+button {
+    background-color: #2980b9; 
+    color: white;
+    padding: 10px 15px;
+    margin: 5px 5px 5px 0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #216a96;
+}
+
+/* Botón Crear/Guardar */
+.button-group button[type="submit"] {
+    background-color: #4CAF50; /* Verde */
+}
+
+.button-group button[type="submit"]:hover {
+    background-color: #45a049;
+}
+
+/* Botón Cancelar (En formulario) */
+.button-group button:nth-child(2) {
+    background-color: #e67e22; /* Naranja */
+}
+
+/* Botones dentro de la Tabla */
+td .button-group button {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    margin: 2px;
+}
+
+td .button-group button:nth-child(1) { /* Editar */
+    background-color: #2980b9;
+}
+
+td .button-group button:nth-child(2) { /* Eliminar */
+    background-color: #e74c3c;
+}
+
+/* --- Estilos de Tabla --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #4a6681;
+    padding: 12px 8px;
+    text-align: left;
+    color: #ecf0f1;
+}
+
+th {
+    background-color: #1e88e5; 
+    color: white;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #3f556d;
+}
