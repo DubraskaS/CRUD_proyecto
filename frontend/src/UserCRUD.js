@@ -1,8 +1,10 @@
 // frontend/src/UserCRUD.js (Usando fetch)
 import React, { useState, useEffect, useCallback } from 'react';
 
-// ⚠️ IMPORTANTE: URL de tu API de Flask
-const API_URL = 'http://localhost:5000/api/users';
+//URL local de API de Flask
+//const API_URL = 'http://localhost:5000/api/users';
+// URL base de la variable de entorno en Vercel (https://crud-proyecto.onrender.com)
+const API_URL = process.env.REACT_APP_API_URL;
 
 const UserCRUD = () => {
     const [users, setUsers] = useState([]);
@@ -18,7 +20,7 @@ const UserCRUD = () => {
     // Usamos useCallback para memoizar la función y optimizar el useEffect
     const fetchUsers = useCallback(async () => {
         try {
-            const response = await fetch(API_URL);
+            const response = await fetch(`${API_URL}/api/users`);
             // fetch NO lanza error en la red (4xx o 5xx), debemos verificar .ok
             if (!response.ok) { 
                 throw new Error(`HTTP error! status: ${response.status}`);
