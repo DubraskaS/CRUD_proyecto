@@ -13,12 +13,16 @@ def get_users():
     return jsonify(USERS_MOCK)
 
 # Crear usuario (CREATE)
-@users_bp.route('', methods=['POST'])
+@users_bp.route('/', methods=['POST'])
 def create_user():
     global next_id
     data = request.get_json()
-    # Validación básica de datos
-    if data is None or not all(k in data and data.get(k) for k in ('name', 'email', 'age')):
+    # VERIFICACIÓN CRUCIAL de si el JSON fue recibido
+    if data is None:
+        return jsonify({'error': 'Missing request body or incorrect Content-Type (must be application/json)'}), 400
+        
+    # Validación de campos obligatorios
+    if not all(k in data and data.get(k) is not None for k in ('name', 'email', 'age')):
         return jsonify({'error': 'Missing or empty data (name, email, age)'}), 400
     
     # Validacion de duplicados
@@ -72,14 +76,20 @@ def search_user():
 # 4. Actualizar datos del usuario (UPDATE)
 @users_bp.route('/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
-    data = request.json
+    data = request.get_json()
     
+    # 1. VERIFICACIÓN CRUCIAL de si el JSON fue recibido
+    if data is None:
+        return jsonify({'error': 'Missing request body or incorrect Content-Type (must be application/json)'}), 400
+        
     for i, user in enumerate(USERS_MOCK):
         if user['id'] == user_id:
-            # Encuentra el usuario y aplica los cambios
+            # Encuentra el usuario y aplica los cambios (usando data.get(k, default))
             USERS_MOCK[i]['name'] = data.get('name', user['name'])
             USERS_MOCK[i]['email'] = data.get('email', user['email'])
-            USERS_MOCK[i]['age'] = data.get('age', user['age'])
+            # Asegúrate de que age se maneje correctamente, es probable que venga como int/number
+            if 'age' in data and data['age'] is not None:
+                USERS_MOCK[i]['age'] = data['age']
             
             return jsonify(USERS_MOCK[i]), 200
             
