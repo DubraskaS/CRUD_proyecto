@@ -20,7 +20,7 @@ const UserCRUD = () => {
     // Usamos useCallback para memoizar la función y optimizar el useEffect
     const fetchUsers = useCallback(async () => {
         try {
-            const response = await fetch(`${API_URL}/api/users`);
+            const response = await fetch(`/api/users`);
             // fetch NO lanza error en la red (4xx o 5xx), debemos verificar .ok
             if (!response.ok) { 
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -51,7 +51,7 @@ const UserCRUD = () => {
     // 2. BUSCAR UN USUARIO (READ FILTER)
     // ------------------------------------
     const handleSearch = async () => {
-        const searchURL = `${API_URL}/search?q=${search}`;
+        const searchURL = `/api/users/search?q=${search}`;
         try {
             const response = await fetch(searchURL);
             if (!response.ok) {
@@ -80,7 +80,7 @@ const UserCRUD = () => {
         if (!window.confirm(`¿Seguro que quieres eliminar al usuario con ID ${id}?`)) return;
         
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`/api/users/${id}`, {
                 method: 'DELETE',
             });
             if (!response.ok) {
@@ -109,7 +109,7 @@ const UserCRUD = () => {
         }
         
         const method = editingUser ? 'PUT' : 'POST';
-        const url = editingUser ? `${API_URL}/${editingUser.id}` : API_URL;
+        const url = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
 
         try {
             const response = await fetch(url, {
@@ -120,19 +120,34 @@ const UserCRUD = () => {
                 body: JSON.stringify(userData), // Convertir a JSON
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-
+            // Verificamos si la respuesta es OK (2xx)
+        if (response.ok) {
             alert(`Usuario ${editingUser ? 'actualizado' : 'creado'} con éxito!`);
             setEditingUser(null);
             fetchUsers();
+        } else {
+            // 💡 SOLUCIÓN: Intentamos leer como JSON, si falla, leemos como texto.
+            let errorMessage = `HTTP error! Status: ${response.status}`;
+            
+            try {
+                // Intenta parsear la respuesta como JSON (si el backend devuelve un error JSON)
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (jsonError) {
+                // Si falla, significa que el servidor no devolvió JSON (ej: HTML de Vercel 404/500)
+                // Opcional: leer el cuerpo como texto para ver el mensaje HTML
+                // const textBody = await response.text(); 
+                console.error("No se pudo leer el JSON de error. La respuesta no es JSON.");
+                // Dejamos el mensaje de error como el status HTTP
+            }
 
-        } catch (error) {
-            console.error(`Error al ${editingUser ? 'actualizar' : 'crear'}:`, error);
-            alert(`Error: ${error.message}`);
+            throw new Error(errorMessage);
         }
+
+    } catch (error) {
+        console.error(`Error al ${editingUser ? 'actualizar' : 'crear'}:`, error);
+        alert(`Error: ${error.message}`);
+    }
         
         // Limpiar formulario
         setName(''); setEmail(''); setAge('');
