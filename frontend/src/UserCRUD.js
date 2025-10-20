@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 //URL local de API de Flask
 //const API_URL = 'http://localhost:5000/api/users';
 // URL base de la variable de entorno en Vercel 
-const API_URL = "";
+//const API_URL = "";
 
 const UserCRUD = () => {
     const [users, setUsers] = useState([]);
