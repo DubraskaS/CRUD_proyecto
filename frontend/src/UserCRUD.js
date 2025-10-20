@@ -3,8 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 //URL local de API de Flask
 //const API_URL = 'http://localhost:5000/api/users';
-// URL base de la variable de entorno en Vercel (https://crud-proyecto.onrender.com)
-const API_URL = process.env.REACT_APP_API_URL;
+// URL base de la variable de entorno en Vercel 
+const API_URL = "";
 
 const UserCRUD = () => {
     const [users, setUsers] = useState([]);
