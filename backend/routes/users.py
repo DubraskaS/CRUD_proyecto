@@ -17,20 +17,18 @@ def get_users():
 def create_user():
     global next_id
     data = request.get_json()
-    # VERIFICACIÓN CRUCIAL de si el JSON fue recibido
+    #VERIFICACIÓN CRUCIAL: Si data es None, devolver error JSON inmediatamente.
     if data is None:
         return jsonify({'error': 'Missing request body or incorrect Content-Type (must be application/json)'}), 400
         
-    # Validación de campos obligatorios
+    #Validación de campos obligatorios
     if not all(k in data and data.get(k) is not None for k in ('name', 'email', 'age')):
         return jsonify({'error': 'Missing or empty data (name, email, age)'}), 400
     
-    # Validacion de duplicados
-    if data:
-        new_email = data.get('email')
-        if new_email and any(user['email'] == new_email for user in USERS_MOCK):
-            # Si el correo ya existe, devuelve un error 409 Conflict
-            return jsonify({'error': f'Email {new_email} already exists.'}), 409
+    #Validacion de duplicados
+    new_email = data.get('email')
+    if new_email and any(user['email'] == new_email for user in USERS_MOCK):
+        return jsonify({'error': f'Email {new_email} already exists.'}), 409
         
     new_user = {
         'id': next_id,
@@ -76,9 +74,9 @@ def search_user():
 # 4. Actualizar datos del usuario (UPDATE)
 @users_bp.route('/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
-    data = request.get_json()
+    data = request.json
     
-    # 1. VERIFICACIÓN CRUCIAL de si el JSON fue recibido
+    # 1. VERIFICACIÓN CRUCIAL: Si data es None, devolver error JSON inmediatamente.
     if data is None:
         return jsonify({'error': 'Missing request body or incorrect Content-Type (must be application/json)'}), 400
         
@@ -87,10 +85,11 @@ def update_user(user_id):
             # Encuentra el usuario y aplica los cambios (usando data.get(k, default))
             USERS_MOCK[i]['name'] = data.get('name', user['name'])
             USERS_MOCK[i]['email'] = data.get('email', user['email'])
-            # Asegúrate de que age se maneje correctamente, es probable que venga como int/number
-            if 'age' in data and data['age'] is not None:
-                USERS_MOCK[i]['age'] = data['age']
             
+            # Si 'age' existe y no es None, actualízalo
+            if 'age' in data and data['age'] is not None:
+                 USERS_MOCK[i]['age'] = data['age']
+                 
             return jsonify(USERS_MOCK[i]), 200
             
     # Si el usuario no se encuentra
