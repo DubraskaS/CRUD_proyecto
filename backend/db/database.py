@@ -3,7 +3,6 @@ import os
 from typing import List, Dict, Any
 
 # --- Configuración de Conexión (Lee Variables de Entorno) ---
-# ⚠️ IMPORTANTE: Estas variables deben configurarse en el entorno de AWS (Elastic Beanstalk/Lambda)
 DB_HOST = os.environ.get('database-crud.chum8swwq3kx.us-east-2.rds.amazonaws.com')
 DB_NAME = os.environ.get('database-crud')
 DB_USER = os.environ.get('postgres')
