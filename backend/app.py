@@ -20,7 +20,7 @@ app.json.compact = True
 
 # Registra el Blueprint de usuarios
 # Las rutas de users.py se acceden a través de /users/
-app.register_blueprint(users_bp, url_prefix='/users')
+app.register_blueprint(users_bp, url_prefix='/api/users')
 
 # Ruta de inicio para confirmar que la API funciona
 @app.route('/', methods=['GET'])
