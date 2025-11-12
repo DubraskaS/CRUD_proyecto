@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 
 # --- Configuración de Conexión (Lee Variables de Entorno) ---
 DB_HOST = os.environ.get('database-crud.chum8swwq3kx.us-east-2.rds.amazonaws.com')
-DB_NAME = os.environ.get('postgres')
+DB_NAME = os.environ.get('-')
 DB_USER = os.environ.get('postgres')
 DB_PASSWORD = os.environ.get('crudclave')
 
