@@ -1,0 +1,7 @@
+# backend/api/index.py
+# Este archivo es el punto de entrada (entry point) que Vercel busca.
+# Vercel espera una variable llamada 'app' o 'application' para ejecutar.
+
+# Importamos la aplicación Flask ya configurada (incluyendo DB, rutas, y CORS)
+# desde 'backend/app.py'.
+from backend.app import app
