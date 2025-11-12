@@ -17,7 +17,7 @@ app.json.compact = True
 # --- FIN DE CONFIGURACIÓN CRÍTICA ---
 
 # Registra el Blueprint de usuarios
-app.register_blueprint(users_bp, url_prefix='/api/users')
+app.register_blueprint(users_bp, url_prefix='/routes/users')
 
 @app.route('/')
 def home():

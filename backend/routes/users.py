@@ -1,98 +1,112 @@
-#CRUD PARA VERSION EN AWS (version en bd)
-
 from flask import Blueprint, jsonify, request
-from functools import wraps
-import json
 
-# Importamos las funciones CRUD del nuevo módulo de base de datos 'database.py'
-from db.database import get_all_users, get_user_by_id, create_new_user, update_existing_user, delete_user_by_id, search_users
+from db.database import get_all_users, create_new_user, get_user_by_id, update_existing_user, delete_user_by_id, search_users
 
+# Crea el Blueprint, que es el módulo de rutas para usuarios
 users_bp = Blueprint('users', __name__)
 
-def validate_user_data(f):
-    """
-    Decorador para validar que los datos del usuario (nombre, correo, edad)
-    sean correctos y estén presentes en la petición JSON.
-    """
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        data = request.get_json(silent=True)
-        if not data:
-            return jsonify({"error": "No se recibieron datos o formato JSON incorrecto"}), 400
-        required_fields = ['nombre', 'correo', 'edad']
-        for field in required_fields:
-            if field not in data:
-                return jsonify({"error": f"El campo '{field}' es requerido."}), 400
-        if not isinstance(data['edad'], int) or data['edad'] <= 0:
-            return jsonify({"error": "La edad debe ser un número entero positivo."}), 400
-        return f(*args, **kwargs)
-    return wrapper
-
-# Obtener todos los usuarios / Crear nuevo usuario
+# ----------------------------------------------------------------------
+# RUTA: /api/users/ (GET: Obtener todos, POST: Crear nuevo)
+# ----------------------------------------------------------------------
 @users_bp.route('/', methods=['GET', 'POST'])
-def users():
-    """Maneja GET (obtener todos) y POST (crear nuevo)."""
-    if request.method == 'GET':
-        # Llama a la función que consulta la DB
-        return jsonify(get_all_users())
+def handle_users():
+    """Maneja las solicitudes GET (obtener todos) y POST (crear nuevo)."""
     
-    # POST
-    @validate_user_data
-    def create():
-        data = request.get_json()
-        # Llama a la función que inserta en la DB
-        new_user = create_new_user(data['nombre'], data['correo'], data['edad'])
+    # --- GET: Obtener todos los usuarios ---
+    if request.method == 'GET':
+        # La función get_all_users en db/database.py ya se encarga 
+        # de mapear las tuplas de PostgreSQL a diccionarios (JSON)
+        users = get_all_users()
         
-        if new_user is None:
-             # Retorna un error 409 si falla la restricción UNIQUE (correo)
-             return jsonify({"error": "Error de integridad: el correo ya existe o faltan datos."}), 409
-            
-        return jsonify(new_user), 201
+        # Devuelve directamente la lista de diccionarios/usuarios
+        return jsonify(users), 200
 
-    return create()
+    # --- POST: Crear un nuevo usuario ---
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            nombre = data.get('nombre')
+            correo = data.get('correo')
+            edad = data.get('edad')
 
-# Buscar usuarios por nombre o correo
-@users_bp.route('/search', methods=['GET'])
-def search():
-    """Busca usuarios usando el parámetro 'q' de la URL."""
-    query = request.args.get('q', '')
-    if not query:
-        return jsonify({"error": "Parámetro 'q' de búsqueda es requerido."}), 400
-    # Llama a la función que busca en la DB
-    results = search_users(query)
-    return jsonify(results)
+            # Validar datos
+            if not nombre or not correo or not edad:
+                return jsonify({"error": "Faltan campos obligatorios (nombre, correo, edad)."}), 400
 
-# Obtener, Actualizar o Eliminar usuario por ID
+            try:
+                edad = int(edad)
+            except ValueError:
+                return jsonify({"error": "La edad debe ser un número entero."}), 400
+
+            # Crear usuario en la DB
+            new_user = create_new_user(nombre, correo, edad)
+
+            if new_user:
+                # Si se creó exitosamente, retorna el objeto del nuevo usuario y 201 Created
+                return jsonify(new_user), 201
+            else:
+                # Esto cubre el caso de violación de unicidad (correo ya existe)
+                return jsonify({"error": "Error de integridad: el correo ya existe o fallan datos."}), 409
+        
+        except Exception as e:
+            # Error genérico en la solicitud
+            print(f"ERROR en POST /: {e}")
+            return jsonify({"error": "Error interno del servidor al crear usuario."}), 500
+
+# ----------------------------------------------------------------------
+# RUTA: /api/users/<user_id> (GET, PUT, DELETE)
+# ----------------------------------------------------------------------
 @users_bp.route('/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
-def user_detail(user_id):
-    """Maneja GET, PUT y DELETE para un usuario específico por ID."""
-    # Primero verifica si el usuario existe en la DB
-    user = get_user_by_id(user_id)
-    if not user:
-        return jsonify({"error": f"Usuario con ID {user_id} no encontrado"}), 404
+def handle_user_by_id(user_id):
+    """Maneja las solicitudes GET, PUT y DELETE para un usuario específico."""
 
+    # --- GET: Obtener usuario por ID ---
     if request.method == 'GET':
-        return jsonify(user)
-
-    if request.method == 'DELETE':
-        # Llama a la función que elimina de la DB
-        success = delete_user_by_id(user_id)
-        if success:
-            return '', 204 # Retorna 204 No Content si fue exitoso
+        user = get_user_by_id(user_id)
+        if user:
+            return jsonify(user), 200
         else:
-            return jsonify({"error": f"Error al eliminar usuario con ID {user_id}."}), 500
+            return jsonify({"error": "Usuario no encontrado."}), 404
 
-    # PUT
-    @validate_user_data
-    def update():
+    # --- PUT: Actualizar usuario ---
+    elif request.method == 'PUT':
         data = request.get_json()
-        # Llama a la función que actualiza en la DB
-        updated_user = update_existing_user(user_id, data['nombre'], data['correo'], data['edad'])
-        
-        if updated_user is None:
-            # Esto puede ocurrir si hubo un fallo interno
-            return jsonify({"error": f"Error al actualizar usuario con ID {user_id}."}), 500 
-            
-        return jsonify(updated_user)
-    
-    return update()
+        nombre = data.get('nombre')
+        correo = data.get('correo')
+        edad = data.get('edad')
+
+        if not nombre or not correo or not edad:
+            return jsonify({"error": "Faltan campos obligatorios para actualizar."}), 400
+
+        try:
+            edad = int(edad)
+        except ValueError:
+            return jsonify({"error": "La edad debe ser un número entero."}), 400
+
+        updated_user = update_existing_user(user_id, nombre, correo, edad)
+
+        if updated_user:
+            return jsonify(updated_user), 200
+        else:
+            return jsonify({"error": "Usuario no encontrado o conflicto de datos (ej. correo ya existe)."}), 409
+
+    # --- DELETE: Eliminar usuario ---
+    elif request.method == 'DELETE':
+        if delete_user_by_id(user_id):
+            return jsonify({"message": f"Usuario con ID {user_id} eliminado."}), 200
+        else:
+            return jsonify({"error": "Usuario no encontrado o fallo al eliminar."}), 404
+
+# ----------------------------------------------------------------------
+# RUTA: /api/users/search (GET)
+# ----------------------------------------------------------------------
+@users_bp.route('/search', methods=['GET'])
+def handle_search():
+    """Busca usuarios por nombre o correo."""
+    query = request.args.get('q')
+    if not query:
+        return jsonify({"error": "Falta el parámetro de búsqueda 'q'."}), 400
+
+    results = search_users(query)
+    # Devuelve la lista de resultados de búsqueda
+    return jsonify(results), 200
