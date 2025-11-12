@@ -3,10 +3,12 @@ import os
 from typing import List, Dict, Any
 
 # --- Configuración de Conexión (Lee Variables de Entorno) ---
-DB_HOST = os.environ.get('database-crud.chum8swwq3kx.us-east-2.rds.amazonaws.com')
-DB_NAME = os.environ.get('-')
-DB_USER = os.environ.get('postgres')
-DB_PASSWORD = os.environ.get('crudclave')
+DB_HOST = os.environ.get('DB_HOST')
+DB_NAME = os.environ.get('DB_NAME')
+DB_USER = os.environ.get('DB_USER')
+DB_PASSWORD = os.environ.get('DB_PASSWORD')
+# El puerto debe ser leído también, usando 5432 como valor por defecto.
+DB_PORT = os.environ.get('RDS_PORT', 5432) 
 
 def get_db_connection():
     """Obtiene y retorna una conexión a la base de datos de AWS RDS."""
@@ -20,7 +22,8 @@ def get_db_connection():
             host=DB_HOST,
             database=DB_NAME,
             user=DB_USER,
-            password=DB_PASSWORD
+            password=DB_PASSWORD,
+            port=DB_PORT
         )
         return conn
     except Exception as e:
