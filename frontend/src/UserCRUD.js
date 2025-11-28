@@ -1,10 +1,17 @@
-// frontend/src/UserCRUD.js (Usando fetch)
+// frontend/src/UserCRUD.js (CÓDIGO MODIFICADO)
 import React, { useState, useEffect, useCallback } from 'react';
 
-//URL local de API de Flask
-//const API_URL = 'http://localhost:5000/api/users';
-// URL base de la variable de entorno en Vercel 
-const API_URL = "";
+// 💡 CORRECCIÓN 1: Leer la URL de la API de la variable de entorno de Vercel/Vite
+const API_BASE_URL = import.meta.env.VITE_API_URL; 
+
+// Verificación para desarrollo (opcional)
+if (!API_BASE_URL) {
+    console.error("VITE_API_URL no está definida. Usando fallback de prueba.");
+    // Fallback: Si no está definida (solo en entorno local/dev), usar localhost
+    // NOTA: En Vercel, esta variable DEBE estar configurada para que funcione.
+    // API_BASE_URL = 'http://localhost:5000'; 
+}
+
 
 const UserCRUD = () => {
     const [users, setUsers] = useState([]);
@@ -17,11 +24,14 @@ const UserCRUD = () => {
     // ------------------------------------
     // LECTURA DE DATOS (READ ALL)
     // ------------------------------------
-    // Usamos useCallback para memoizar la función y optimizar el useEffect
     const fetchUsers = useCallback(async () => {
+        // 💡 CORRECCIÓN 2: Usar API_BASE_URL + /api/usuarios
+        // Si API_BASE_URL ya termina en /api, solo hay que agregar /users
+        const url = `${API_BASE_URL}/users`; 
+        
         try {
-            const response = await fetch(`${API_URL}/api/users`);
-            // fetch NO lanza error en la red (4xx o 5xx), debemos verificar .ok
+            const response = await fetch(url);
+            
             if (!response.ok) { 
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -29,18 +39,21 @@ const UserCRUD = () => {
             setUsers(data);
         } catch (error) {
             console.error("Error al obtener usuarios:", error);
+            // Mensaje de ayuda si falla la conexión
+            if (error.message.includes('Failed to fetch')) {
+                 alert("Error de Conexión: La API (Vercel Backend) no responde. Revisa VITE_API_URL y CORS.");
+            }
         }
     }, []);
 
     useEffect(() => {
         fetchUsers();
-    }, [fetchUsers]); // Dependencia: fetchUsers (gracias a useCallback)
+    }, [fetchUsers]); 
 
     // ------------------------------------
     // 5. TRUNCAR NOMBRE (Lógica Frontend)
     // ------------------------------------
     const truncateName = (name) => {
-        // Si tiene más de 10 caracteres, colocar 3 puntos
         if (!name || name.length <= 10) {
             return name;
         }
@@ -51,7 +64,8 @@ const UserCRUD = () => {
     // 2. BUSCAR UN USUARIO (READ FILTER)
     // ------------------------------------
     const handleSearch = async () => {
-        const searchURL = `/api/users/search?q=${search}`;
+        // 💡 CORRECCIÓN 3: Usar API_BASE_URL como prefijo
+        const searchURL = `${API_BASE_URL}/users/search?q=${search}`;
         try {
             const response = await fetch(searchURL);
             if (!response.ok) {
@@ -65,7 +79,6 @@ const UserCRUD = () => {
         }
     };
     
-    // Si la caja de búsqueda se vacía, volver a cargar todos los usuarios
     useEffect(() => {
         if (!search) {
             fetchUsers();
@@ -79,8 +92,9 @@ const UserCRUD = () => {
     const handleDelete = async (id) => {
         if (!window.confirm(`¿Seguro que quieres eliminar al usuario con ID ${id}?`)) return;
         
+        // 💡 CORRECCIÓN 4: Usar API_BASE_URL como prefijo
         try {
-            const response = await fetch(`/api/users/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/users/${id}`, {
                 method: 'DELETE',
             });
             if (!response.ok) {
@@ -102,53 +116,50 @@ const UserCRUD = () => {
         e.preventDefault();
         const userData = { name, email, age: parseInt(age) };
 
-        //Verificaciòn para no enviar strings vacios
+        // Verificaciòn para no enviar strings vacios
         if (!name || !email || !age) {
             alert("Todos los campos son obligatorios.");
-            return; // Detiene la ejecución
+            return; 
         }
         
         const method = editingUser ? 'PUT' : 'POST';
-        const url = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
+        // 💡 CORRECCIÓN 5: Usar API_BASE_URL como prefijo en la URL
+        const url = editingUser ? `${API_BASE_URL}/users/${editingUser.id}` : `${API_BASE_URL}/users`;
 
         try {
             const response = await fetch(url, {
                 method: method,
                 headers: {
+                    // El Content-Type ya estaba CORRECTO, ¡bien!
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(userData), // Convertir a JSON
+                // El JSON.stringify ya estaba CORRECTO, ¡bien!
+                body: JSON.stringify(userData), 
             });
 
-            // Verificamos si la respuesta es OK (2xx)
-        if (response.ok) {
-            alert(`Usuario ${editingUser ? 'actualizado' : 'creado'} con éxito!`);
-            setEditingUser(null);
-            fetchUsers();
-        } else {
-            // 💡 SOLUCIÓN: Intentamos leer como JSON, si falla, leemos como texto.
-            let errorMessage = `HTTP error! Status: ${response.status}`;
-            
-            try {
-                // Intenta parsear la respuesta como JSON (si el backend devuelve un error JSON)
-                const errorData = await response.json();
-                errorMessage = errorData.error || errorMessage;
-            } catch (jsonError) {
-                // Si falla, significa que el servidor no devolvió JSON (ej: HTML de Vercel 404/500)
-                // Opcional: leer el cuerpo como texto para ver el mensaje HTML
-                // const textBody = await response.text(); 
-                console.error("No se pudo leer el JSON de error. La respuesta no es JSON.");
-                // Dejamos el mensaje de error como el status HTTP
+            if (response.ok) {
+                alert(`Usuario ${editingUser ? 'actualizado' : 'creado'} con éxito!`);
+                setEditingUser(null);
+                fetchUsers();
+            } else {
+                let errorMessage = `HTTP error! Status: ${response.status}`;
+                
+                try {
+                    const errorData = await response.json();
+                    // Captura el mensaje de error del backend (ej: "Faltan datos requeridos...")
+                    errorMessage = errorData.error || errorMessage;
+                } catch (jsonError) {
+                    console.error("No se pudo leer el JSON de error.");
+                }
+
+                throw new Error(errorMessage);
             }
 
-            throw new Error(errorMessage);
+        } catch (error) {
+            console.error(`Error al ${editingUser ? 'actualizar' : 'crear'}:`, error);
+            alert(`Error: ${error.message}`);
         }
-
-    } catch (error) {
-        console.error(`Error al ${editingUser ? 'actualizar' : 'crear'}:`, error);
-        alert(`Error: ${error.message}`);
-    }
-        
+            
         // Limpiar formulario
         setName(''); setEmail(''); setAge('');
     };
